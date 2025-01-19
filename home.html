@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Room</title>
+  <style>
+    /* CSS */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    .chat-container {
+      width: 400px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .chat-header {
+      margin-bottom: 20px;
+    }
+
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #messages {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    #messageInput {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .message {
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .user-message {
+      background-color: #e1f5fe;
+      text-align: left;
+    }
+
+    .bot-message {
+      background-color: #f3f3f3;
+      text-align: right;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header" id="chatHeader">
+      <h1>Welcome to the Chat Room</h1>
+      <p>Please enter your name to join the chat</p>
+      <input type="text" id="username" placeholder="Enter your name">
+      <button id="joinButton">Join</button>
+    </div>
+
+    <div class="chat-box" id="chatBox" style="display:none;">
+      <div class="messages" id="messages"></div>
+      <input type="text" id="messageInput" placeholder="Type your message..." />
+      <button id="sendButton">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript
+
+    // Check localStorage for messages and render them
+    window.onload = function() {
+      const storedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+      storedMessages.forEach(message => {
+        addMessage(message.username, message.text);
+      });
+    }
+
+    // Listen for changes in localStorage (other tabs sending messages)
+    window.addEventListener('storage', function(event) {
+      if (event.key === 'messages') {
+        const newMessages = JSON.parse(event.newValue) || [];
+        updateMessages(newMessages);
+      }
+    });
+
+    document.getElementById('joinButton').addEventListener('click', function() {
+      const username = document.getElementById('username').value.trim();
+      if (username) {
+        document.getElementById('chatBox').style.display = 'block';
+        document.getElementById('chatHeader').style.display = 'none';
+      } else {
+        alert('Please enter your name!');
+      }
+    });
+
+    document.getElementById('sendButton').addEventListener('click', function() {
+      const messageInput = document.getElementById('messageInput');
+      const messageText = messageInput.value.trim();
+
+      if (messageText) {
+        const username = document.getElementById('username').value;
+        addMessage(username, messageText);
+        messageInput.value = ''; // Clear the message input field
+
+        // Save message to localStorage
+        saveMessage(username, messageText);
+      }
+    });
+
+    function addMessage(username, messageText) {
+      const messagesContainer = document.getElementById('messages');
+      const message = document.createElement('div');
+      message.classList.add('message', 'user-message');
+      message.innerHTML = `<strong>${username}:</strong> ${messageText}`;
+
+      // Append the message to the chat
+      messagesContainer.appendChild(message);
+
+      // Set a timeout to remove the message after 3 minutes
+      setTimeout(() => {
+        message.remove();
+        removeMessageFromStorage(username, messageText);
+      }, 180000); // 180000ms = 3 minutes
+    }
+
+    function saveMessage(username, messageText) {
+      const storedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+      storedMessages.push({ username, text: messageText });
+      localStorage.setItem('messages', JSON.stringify(storedMessages));
+    }
+
+    function removeMessageFromStorage(username, messageText) {
+      let storedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+      storedMessages = storedMessages.filter(message => message.username !== username || message.text !== messageText);
+      localStorage.setItem('messages', JSON.stringify(storedMessages));
+    }
+
+    function updateMessages(messages) {
+      const messagesContainer = document.getElementById('messages');
+      messagesContainer.innerHTML = ''; // Clear the current messages
+      messages.forEach(msg => {
+        addMessage(msg.username, msg.text);
+      });
+    }
+  </script>
+</body>
+</html>
